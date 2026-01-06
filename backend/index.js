@@ -21,11 +21,6 @@ app.get('/', (req, res) => {
     res.send("Hello from Let's Chat Backend");
 })
 
-//routes
-app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/status', statusRoutes);
-
 const corsOption = {
     origin: process.env.FRONTEND_URL,
     credentials: true
@@ -36,6 +31,11 @@ app.use(cors(corsOption))
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+//routes
+app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/status', statusRoutes);
 
 //create server
 const server = http.createServer(app)

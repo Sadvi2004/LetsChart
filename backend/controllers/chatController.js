@@ -11,7 +11,7 @@ exports.sendMessage = async (req, res) => {
         const participants = [senderId, receiverId].sort();
 
         // Check if conversation already exists
-        let conversation = await Conversation.findOne({ participants });
+        let conversation = await Conversation.findOne({ participants: { $all: participants } });
         if (!conversation) {
             conversation = new Conversation({ participants });
             await conversation.save();
@@ -48,20 +48,29 @@ exports.sendMessage = async (req, res) => {
             content,
             contentType,
             imageOrVideoUrl,
-            messageStatus,
+            messageStatus: messageStatus || "sent",
         });
 
         await message.save();
 
-        if (message?.content) {
-            conversation.lastMessage = message._id;
-        }
-        conversation.unreadCount += 1;
+        // Always set lastMessage
+        conversation.lastMessage = message._id;
+        conversation.unreadCount = (conversation.unreadCount || 0) + 1;
         await conversation.save();
 
         const populatedMessage = await Message.findById(message._id)
             .populate("sender", "username profilePicture")
             .populate("receiver", "username profilePicture");
+
+        // Emit event for real time
+        if (req.io && req.socketUserMap) {
+            const receiverSocketId = req.socketUserMap.get(receiverId);
+            if (receiverSocketId) {
+                req.io.to(receiverSocketId).emit("receive_message", populatedMessage);
+                message.messageStatus = "delivered";
+                await message.save();
+            }
+        }
 
         return res.status(201).json({
             message: "Message sent successfully",
@@ -123,7 +132,7 @@ exports.getMessage = async (req, res) => {
             {
                 conversation: conversationId,
                 receiver: userId,
-                messageStatus: { $in: ["send", "delivered"] },
+                messageStatus: { $in: ["sent", "delivered"] },
             },
             { $set: { messageStatus: "read" } }
         );
@@ -157,6 +166,19 @@ exports.markAsRead = async (req, res) => {
             { $set: { messageStatus: "read" } }
         );
 
+        // Notify original sender
+        if (req.io && req.socketUserMap) {
+            for (const message of messages) {
+                const senderSocketId = req.socketUserMap.get(message.sender.toString());
+                if (senderSocketId) {
+                    req.io.to(senderSocketId).emit("message_read", {
+                        _id: message._id,
+                        messageStatus: "read",
+                    });
+                }
+            }
+        }
+
         return res.status(200).json({
             message: "Messages marked as read",
             data: messages,
@@ -181,6 +203,15 @@ exports.deleteMessage = async (req, res) => {
         }
 
         await message.deleteOne();
+
+        // Emit socket event
+        if (req.io && req.socketUserMap) {
+            const receiverSocketId = req.socketUserMap.get(message.receiver.toString());
+            if (receiverSocketId) {
+                req.io.to(receiverSocketId).emit("message_deleted", { _id: messageId });
+            }
+        }
+
         return res.status(200).json({ message: "Message deleted successfully" });
     } catch (error) {
         console.error(error);

@@ -2,10 +2,8 @@ const { Server } = require('socket.io');
 const User = require('../models/User');
 const Message = require('../models/Message');
 
-// Map to store online users
+// Maps to track online presence and typing states
 const onlineUsers = new Map();
-
-// Map to track typing status
 const typingUsers = new Map();
 
 const initializeSocket = (server) => {
@@ -15,32 +13,32 @@ const initializeSocket = (server) => {
             credentials: true,
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         },
-        pingTimeout: 60000, // Disconnect inactive sockets after 60 sec
+        pingTimeout: 60000, // disconnect inactive sockets after 60s
     });
 
-    io.on("connection", (socket) => {
+    io.on('connection', (socket) => {
         console.log(`User connected: ${socket.id}`);
         let userId = null;
 
-        // Handle user connection
-        socket.on("user_connected", async (connectingUserId) => {
+        // User connected
+        socket.on('user_connected', async (connectingUserId) => {
             try {
                 userId = connectingUserId;
                 onlineUsers.set(userId, socket.id);
-                socket.join(userId);
+                socket.join(userId); // join personal room
 
                 await User.findByIdAndUpdate(userId, {
                     isOnline: true,
-                    lastSeen: new Date()
+                    lastSeen: new Date(),
                 });
 
-                io.emit("user_status", { userId, isOnline: true });
+                io.emit('user_status', { userId, isOnline: true });
             } catch (error) {
-                console.log("Error handling user connection", error);
+                console.log('Error handling user connection', error);
             }
         });
 
-        // Get user status
+        // Query a specific user's online status
         socket.on('get_user_status', (requestedUserId, callback) => {
             const isOnline = onlineUsers.has(requestedUserId);
             callback({
@@ -50,43 +48,53 @@ const initializeSocket = (server) => {
             });
         });
 
-        // Send message
-        socket.on("send_message", async (message) => {
+        // Relay a message to receiver if online
+        socket.on('send_message', async (message) => {
             try {
-                const receiverSocketId = onlineUsers.get(message.receiver?._id);
+                // Prefer receiverId if provided, otherwise attempt receiver._id
+                const receiverId =
+                    message.receiverId ||
+                    (message.receiver && message.receiver._id && message.receiver._id.toString());
+
+                if (!receiverId) {
+                    socket.emit('message_error', { error: 'Invalid receiver' });
+                    return;
+                }
+
+                const receiverSocketId = onlineUsers.get(receiverId);
                 if (receiverSocketId) {
-                    io.to(receiverSocketId).emit("receiver_message", message);
+                    io.to(receiverSocketId).emit('receive_message', message);
                 }
             } catch (error) {
-                console.error("Error sending message", error);
-                socket.emit("message_error", { error: "failed to send message" });
+                console.error('Error sending message', error);
+                socket.emit('message_error', { error: 'Failed to send message' });
             }
         });
 
-        // Mark message as read
-        socket.on("message_read", async ({ messageIds, senderId }) => {
+        // Mark messages as read and notify sender(s)
+        socket.on('message_read', async ({ messageIds, senderId }) => {
             try {
+                if (!Array.isArray(messageIds) || messageIds.length === 0) return;
+
                 await Message.updateMany(
                     { _id: { $in: messageIds } },
-                    { $set: { messageStatus: "read" } }
+                    { $set: { messageStatus: 'read' } }
                 );
 
                 const senderSocketId = onlineUsers.get(senderId);
                 if (senderSocketId) {
-                    messageIds.forEach((messageId) => {
-                        io.to(senderSocketId).emit("message_status_update", {
-                            messageId,
-                            messageStatus: 'read'
-                        });
+                    io.to(senderSocketId).emit('message_status_update', {
+                        messageIds,
+                        messageStatus: 'read',
                     });
                 }
             } catch (error) {
-                console.log("Error updating message read status", error);
+                console.log('Error updating message read status', error);
             }
         });
 
-        // Typing start
-        socket.on("typing_start", ({ conversationId, receiverId }) => {
+        // Typing start with auto-timeout
+        socket.on('typing_start', ({ conversationId, receiverId }) => {
             if (!userId || !conversationId || !receiverId) return;
 
             if (!typingUsers.has(userId)) typingUsers.set(userId, {});
@@ -100,22 +108,22 @@ const initializeSocket = (server) => {
 
             userTyping[`${conversationId}_timeout`] = setTimeout(() => {
                 userTyping[conversationId] = false;
-                io.to(receiverId).emit("user_typing", {
+                io.to(receiverId).emit('user_typing', {
                     userId,
                     conversationId,
-                    isTyping: false
+                    isTyping: false,
                 });
             }, 3000);
 
-            io.to(receiverId).emit("user_typing", {
+            io.to(receiverId).emit('user_typing', {
                 userId,
                 conversationId,
-                isTyping: true
+                isTyping: true,
             });
         });
 
         // Typing stop
-        socket.on("typing_stop", ({ conversationId, receiverId }) => {
+        socket.on('typing_stop', ({ conversationId, receiverId }) => {
             if (!userId || !conversationId || !receiverId) return;
 
             if (typingUsers.has(userId)) {
@@ -129,16 +137,18 @@ const initializeSocket = (server) => {
                 userTyping[conversationId] = false;
             }
 
-            io.to(receiverId).emit("user_typing", {
+            io.to(receiverId).emit('user_typing', {
                 userId,
                 conversationId,
-                isTyping: false
+                isTyping: false,
             });
         });
 
-        // Add reaction
-        socket.on("add_reaction", async ({ messageId, emoji, reactionUserId }) => {
+        // Add or toggle reaction on a message
+        socket.on('add_reaction', async ({ messageId, emoji, reactionUserId }) => {
             try {
+                if (!messageId || !emoji || !reactionUserId) return;
+
                 const message = await Message.findById(messageId);
                 if (!message) return;
 
@@ -149,8 +159,10 @@ const initializeSocket = (server) => {
                 if (existingIndex > -1) {
                     const existing = message.reactions[existingIndex];
                     if (existing.emoji === emoji) {
+                        // Same emoji -> remove reaction (toggle off)
                         message.reactions.splice(existingIndex, 1);
                     } else {
+                        // Different emoji -> update reaction
                         message.reactions[existingIndex].emoji = emoji;
                     }
                 } else {
@@ -160,27 +172,35 @@ const initializeSocket = (server) => {
                 await message.save();
 
                 const populatedMessage = await Message.findById(message._id)
-                    .populate("sender", "username profilePicture")
-                    .populate("receiver", "username profilePicture")
-                    .populate("reactions.user", "username");
+                    .populate('sender', 'username profilePicture')
+                    .populate('receiver', 'username profilePicture')
+                    .populate('reactions.user', 'username');
 
                 const reactionUpdated = {
                     messageId,
-                    reactions: populatedMessage.reactions
+                    reactions: populatedMessage.reactions,
                 };
 
-                const senderSocket = onlineUsers.get(populatedMessage.sender?._id.toString());
-                const receiverSocket = onlineUsers.get(populatedMessage.receiver?._id.toString());
+                const senderId =
+                    populatedMessage.sender && populatedMessage.sender._id
+                        ? populatedMessage.sender._id.toString()
+                        : null;
+                const receiverId =
+                    populatedMessage.receiver && populatedMessage.receiver._id
+                        ? populatedMessage.receiver._id.toString()
+                        : null;
 
-                if (senderSocket) io.to(senderSocket).emit("reaction_update", reactionUpdated);
-                if (receiverSocket) io.to(receiverSocket).emit("reaction_update", reactionUpdated);
+                const senderSocket = senderId ? onlineUsers.get(senderId) : null;
+                const receiverSocket = receiverId ? onlineUsers.get(receiverId) : null;
 
+                if (senderSocket) io.to(senderSocket).emit('reaction_update', reactionUpdated);
+                if (receiverSocket) io.to(receiverSocket).emit('reaction_update', reactionUpdated);
             } catch (error) {
-                console.log("Error handling reaction", error);
+                console.log('Error handling reaction', error);
             }
         });
 
-        // Disconnect
+        // Clean up on disconnect
         const handleDisconnected = async () => {
             if (!userId) return;
             try {
@@ -196,25 +216,26 @@ const initializeSocket = (server) => {
 
                 await User.findByIdAndUpdate(userId, {
                     isOnline: false,
-                    lastSeen: new Date()
+                    lastSeen: new Date(),
                 });
 
-                io.emit("user_status", {
+                io.emit('user_status', {
                     userId,
                     isOnline: false,
-                    lastSeen: new Date()
+                    lastSeen: new Date(),
                 });
 
                 socket.leave(userId);
                 console.log(`User ${userId} disconnected`);
             } catch (error) {
-                console.log("Error handling disconnection", error);
+                console.log('Error handling disconnection', error);
             }
         };
 
-        socket.on("disconnect", handleDisconnected);
+        socket.on('disconnect', handleDisconnected);
     });
 
+    // expose map for HTTP handlers to use
     io.socketUserMap = onlineUsers;
     return io;
 };

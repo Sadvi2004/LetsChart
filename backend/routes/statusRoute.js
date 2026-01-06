@@ -6,8 +6,8 @@ const { multerMiddleware } = require("../config/cloudinaryConfig");
 const router = express.Router();
 
 //protected routes
-router.post('/', authMiddleware, multerMiddleware, statusController.CreateStatus);
-router.get('/conversation', authMiddleware, statusController.getStatus);
+router.post('/create', authMiddleware, multerMiddleware, statusController.CreateStatus);
+router.get('/getStatus', authMiddleware, statusController.getStatus);
 router.put('/:statusId/view', authMiddleware, statusController.viewStatus);
 router.delete('/:statusId', authMiddleware, statusController.deleteStatus);
 module.exports = router;
