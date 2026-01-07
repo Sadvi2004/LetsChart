@@ -31,7 +31,7 @@ const sendOtp = async (req, res) => {
             return response(res, 400, "Phone number and suffix are required");
         }
 
-        const fullPhoneNumber = `+${phoneSuffix}${phoneNumber}`;
+        const fullPhoneNumber = `${phoneSuffix}${phoneNumber}`;
         user = await User.findOne({ phoneNumber });
         if (!user) {
             user = new User({ phoneNumber, phoneSuffix });

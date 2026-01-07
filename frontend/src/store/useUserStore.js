@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export const useUserStore = create(
+const useUserStore = create(
     persist(
         (set) => ({
             user: null,
@@ -15,3 +15,4 @@ export const useUserStore = create(
         }
     )
 );
+export default useUserStore;

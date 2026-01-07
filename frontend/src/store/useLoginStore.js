@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export const useLoginStore = create(
+const useLoginStore = create(
     persist(
         (set) => ({
             step: 1,
@@ -24,3 +24,4 @@ export const useLoginStore = create(
         }
     )
 );
+export default useLoginStore;
