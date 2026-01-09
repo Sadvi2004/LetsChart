@@ -2,7 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FaSpinner } from 'react-icons/fa';
 
-export default function Spinner({ size = 'medium', color = 'light', showText = true }) {
+export default function Spinner({
+    size = 'medium',
+    color = 'light',
+    showText = true,
+}) {
     const sizeClasses = {
         small: 'w-4 h-4',
         medium: 'w-6 h-6',
@@ -25,6 +29,7 @@ export default function Spinner({ size = 'medium', color = 'light', showText = t
             >
                 <FaSpinner className="w-full h-full" />
             </motion.div>
+
             {showText && (
                 <span className={`${colorClasses[color]} text-md font-medium`}>
                     Loading...
