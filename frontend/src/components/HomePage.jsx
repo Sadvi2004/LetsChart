@@ -1,41 +1,58 @@
-import React, { useEffect, useState } from 'react';
-import Layout from './Layout';
-import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import Layout from "./Layout";
 import ChatList from "../pages/chatSection/ChatList";
-import useLayoutStore from '../store/layoutStore';
+import { getConversations } from "../services/chat.service";
 import { getAllUsers } from "../services/user.service";
+import useUserStore from "../store/useUserStore";
 
 const HomePage = () => {
-    const setSelectedContact = useLayoutStore((state) => state.setSelectedContact);
-    const [allUsers, setAllUsers] = useState([]);
+    const { user } = useUserStore();
+    const [contacts, setContacts] = useState([]);
 
     useEffect(() => {
-        const getAllUser = async () => {
-            try {
-                const result = await getAllUsers();
-                if (result.status === 'success') {
-                    setAllUsers(result.data);
-                }
-            } catch (error) {
-                console.error(error);
-            }
+        if (!user?._id) return;
+
+        const loadChats = async () => {
+            const [convRes, usersRes] = await Promise.all([
+                getConversations(),
+                getAllUsers()
+            ]);
+
+            const conversationMap = new Map();
+
+            convRes.data.forEach((conv) => {
+                const otherUser = conv.participants.find(
+                    (p) => p._id !== user._id
+                );
+
+                conversationMap.set(otherUser._id, {
+                    _id: otherUser._id,
+                    username: otherUser.username,
+                    profilePicture: otherUser.profilePicture,
+                    conversation: conv,
+                });
+            });
+
+            const merged = usersRes.data
+                .filter((u) => u._id !== user._id)
+                .map((u) =>
+                    conversationMap.get(u._id) || {
+                        _id: u._id,
+                        username: u.username,
+                        profilePicture: u.profilePicture,
+                        conversation: null, // ❗ no chat yet
+                    }
+                );
+
+            setContacts(merged);
         };
 
-        getAllUser();
-    }, []);
-
-    console.log("all users:", allUsers);
+        loadChats();
+    }, [user]);
 
     return (
         <Layout>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className='h-full'
-            >
-                <ChatList contacts={allUsers} setSelectedContact={setSelectedContact} />
-            </motion.div>
+            <ChatList contacts={contacts} />
         </Layout>
     );
 };
