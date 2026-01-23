@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/user-login/Login";
 import HomePage from "./components/HomePage";
@@ -7,10 +7,26 @@ import Status from "./pages/StatusSection/Status";
 import Setting from "./pages/SettingSection/Setting";
 import { NotFound } from "./pages/NotFound";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { ProtectedRoute, PublicRoute } from "./Protected";
+import useUserStore from "./store/useUserStore";
+import { initializeSocket, disconnectSocket } from "./services/chat.service";
 
 function App() {
+  const { user } = useUserStore();
+  const socketInitialized = useRef(false);
+
+  useEffect(() => {
+    if (user?._id && !socketInitialized.current) {
+      initializeSocket();
+      socketInitialized.current = true;
+    }
+
+    if (!user?._id && socketInitialized.current) {
+      disconnectSocket();
+      socketInitialized.current = false;
+    }
+  }, [user?._id]);
+
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
