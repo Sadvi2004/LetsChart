@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { getSocket, initializeSocket } from "../services/chat.service";
 import axiosInstance from "../services/url.service";
-import axios from "axios";
 
 export const useChatStore = create((set, get) => ({
     conversations: [], //list of all conversations
@@ -46,12 +45,15 @@ export const useChatStore = create((set, get) => ({
         });
 
         //handle reaction on message
-        socket.on("reaction_update", ({ messageId, reaction }) => {
+        socket.on("reaction_update", ({ messageId, reactions }) => {
             set((state) => ({
                 messages: state.messages.map((msg) =>
-                    msg._id === messageId ? { ...msg, reaction } : msg)
-            }))
-        })
+                    msg._id === messageId
+                        ? { ...msg, reactions } // ✅ FIXED
+                        : msg
+                ),
+            }));
+        });
 
         //handle remove message from oca state
         socket.on("message_deleted", ({ deletedMessageId }) => {

@@ -19,7 +19,7 @@ export const initializeSocket = () => {
 
     socket = io(BACKEND_URL, {
         withCredentials: true,
-        transports: ["websocket"], // keep only websocket
+        transports: ["websocket"],
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
@@ -47,6 +47,6 @@ export const disconnectSocket = () => {
     if (socket) {
         socket.disconnect();
         socket = null;
-        console.log("🧹 Socket fully disconnected");
+        console.log("Socket fully disconnected");
     }
 };

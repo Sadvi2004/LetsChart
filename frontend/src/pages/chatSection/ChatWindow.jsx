@@ -4,8 +4,9 @@ import useUserStore from '../../store/useUserStore';
 import { useChatStore } from '../../store/chatStore';
 import { isToday, isYesterday, format } from 'date-fns';
 import rightPanel from "../../assets/cp-1.png"
-import { FaArrowLeft, FaLock } from "react-icons/fa";
-
+import { FaArrowLeft, FaEllipsisV, FaImage, FaLock, FaPaperclip, FaSmile, FaTimes, FaVideo, FaFile, FaPaperPlane } from "react-icons/fa";
+import MessageBubble from './MessageBubble';
+import EmojiPicker from "emoji-picker-react";
 
 const isValidate = (date) => {
     return date instanceof Date && !isNaN(date)
@@ -13,7 +14,7 @@ const isValidate = (date) => {
 
 const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
     const [message, setMessage] = useState("");
-    const [showEmojiPicker, setEmojiPicker] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showFileMenu, setShowFileMenu] = useState(false);
     const [filePreview, setFilePreview] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -31,6 +32,8 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
     const online = isUserOnline(selectedContact?._id)
     const lastSeen = isUserLastSeen(selectedContact?._id);
     const isTyping = isUserTyping(selectedContact?._id);
+
+    // console.log(lastSeen);
 
     useEffect(() => {
         if (selectedContact?._id && conversations?.data?.length > 0) {
@@ -73,7 +76,7 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
     }, [message, selectedContact, startTyping, stopTyping])
 
     const handleFileChange = (e) => {
-        const file = e.target.files(0);
+        const file = e.target.files[0];
         if (file) {
             setSelectedFile(file);
             setShowFileMenu(false);
@@ -92,7 +95,7 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
 
             const status = online ? "delivered" : "send";
             formData.append("messageStatus", status);
-            if (!message.trim()) {
+            if (message.trim()) {
                 formData.append("content", message.trim());
             }
             //if there is a file include that too
@@ -113,7 +116,7 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
         }
     }
 
-    const renderDataSeparator = (date) => {
+    const renderDateSeparator = (date) => {
         if (!isValidate(date)) {
             return null;
         }
@@ -155,7 +158,6 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
         addReaction(messageId, emoji)
     }
 
-
     if (!selectedContact) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center mx-auto h-screen text-center">
@@ -169,14 +171,107 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
         )
     }
     return (
-        <div className='flex-1 h-screen w-full flex flex-col'>
-            <div className={`p-4 ${theme === 'dark' ? "bg-[#303430] text-white" : "bg-[rgb(239,242,245)] text-gray-600"} flex items-center`}>
-                <button className='mr-2 focus:outline-none' onClick={() => setSelectedContact(null)}>
-                    <FaArrowLeft className='h-6 w-6' />
+        <div className="flex-1 h-screen w-full flex flex-col">
+            <div className={`p-4 flex items-center ${theme === 'dark' ? "bg-[#303430] text-white" : "bg-[rgb(239,242,245)] text-gray-600"}`}>
+                <button className="mr-2 focus:outline-none" onClick={() => setSelectedContact(null)}>
+                    <FaArrowLeft className="h-6 w-6" />
+                </button>
+
+                <img src={selectedContact?.profilePicture} alt={selectedContact?.username} className="w-10 h-10 rounded-full" />
+                <div className="ml-3 grow">
+                    <h2 className="font-semibold text-start">{selectedContact?.username}</h2>
+                    {isTyping ? (
+                        <span className="text-sm text-green-500">Typing...</span>
+                    ) : (
+                        <p className={`text-sm ${theme === 'dark' ? "text-gray-400" : "text-gray-500"}`}>
+                            {online ? "Online" : lastSeen ? `Last seen ${format(new Date(lastSeen), "HH:mm")}` : "Offline"}
+                        </p>
+                    )}
+                </div>
+
+                <div className="flex items-center space-x-4">
+                    <button className="focus:outline-none"><FaVideo className="h-5 w-5" /></button>
+                    <button className="focus:outline-none"><FaEllipsisV className="h-5 w-5" /></button>
+                </div>
+            </div>
+
+            {/* Messages */}
+            <div className={`flex-1 p-4 overflow-y-auto ${theme === "dark" ? "bg-[#191a1a]" : "bg-[rgb(241,236,229)]"}`}>
+                {Object.entries(groupedMessages).map(([date, msgs]) => (
+                    <React.Fragment key={date}>
+                        {renderDateSeparator(new Date(date))}
+                        {msgs
+                            .filter((msg) => msg.conversation === selectedContact?.conversation?._id)
+                            .map((msg) => (
+                                <MessageBubble
+                                    key={msg._id || msg.tempId}
+                                    message={msg}
+                                    theme={theme}
+                                    currentUser={user}
+                                    onReact={handleReaction}
+                                    deleteMessage={deleteMessage}
+                                />
+                            ))}
+                    </React.Fragment>
+                ))}
+                <div ref={messageEndRef} />
+            </div>
+            {filePreview && (
+                <div className='relative p-2'>
+                    <img src={filePreview} alt="file-preview" className='w-80 object-cover rounded shadow-lg mx-auto' />
+                    <button onClick={() => {
+                        setSelectedFile(null);
+                        setFilePreview(null);
+                    }} className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1">
+                        <FaTimes className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
+
+            <div className={`p-4 ${theme === 'dark' ? "bg-[#303430]" : "bg-white"} flex items-center space-x-2 relative`}>
+                <button className='focus:outline-none'
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+                    <FaSmile className={`h-6 w-6 ${theme === 'dark' ? "text-gray-400" : "text-gray-500"}`} />
+                </button>
+
+                {showEmojiPicker && (
+                    <div ref={emojiPickerRef} className='absolute left-0 bottom-16 z-50'>
+                        <EmojiPicker onEmojiClick={(emojiObject) => {
+                            setMessage((prev) => prev + emojiObject.emoji)
+                            setShowEmojiPicker(false)
+                        }} theme={theme} />
+                    </div>
+                )}
+                <div className=' relative'>
+                    <button className=" focus:outline-none"
+                        onClick={() => setShowFileMenu(!showFileMenu)}>
+                        <FaPaperclip className={`h-6 w-6 ${theme === "dark" ? "text-gray-400" : "text-gray-500"} mt-2`} />
+                    </button>
+
+                    {showFileMenu && (
+                        <div className={`absolute bottom-full left-0 mb-2 ${theme === "dark" ? "bg-gray-700" : "bg-white"} rounded-lg shadow-lg`}>
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept='image/*,video/*' className="hidden" />
+                            <button onClick={() => fileInputRef.current.click()} className={`flex items-center px-4 py-2 w-full transition-colors hover:bg-gray-100 ${theme === 'dark' ? "hover:bg-gray-500" : "bg-gray-100"}`}>
+                                <FaImage className='mr-2' />Image/Video
+                            </button>
+
+                            <button onClick={() => fileInputRef.current.click()} className={`flex items-center px-4 py-2 w-full transition-colors hover:bg-gray-100 ${theme === 'dark' ? "hover:bg-gray-500" : "bg-gray-100"}`}>
+                                <FaFile className='mr-2' /> Documents
+                            </button>
+                        </div>
+                    )}
+                </div>
+                <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                        handleSendMessage();
+                    }
+                }} placeholder='Type a mesaage' className={`grow px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 ${theme === "dark" ? "bg-gray-700 text-white border-gray-600" : "bg-white text-black border-gray-300"}`} />
+                <button onClick={handleSendMessage} className='focus:outline-none'>
+                    <FaPaperPlane className='h-6 w-6 text-green-500' />
                 </button>
             </div>
         </div>
-    )
+    );
 };
 
 export default ChatWindow

@@ -145,7 +145,7 @@ const initializeSocket = (server) => {
         });
 
         // Add or toggle reaction on a message
-        socket.on('add_reaction', async ({ messageId, emoji, reactionUserId }) => {
+        socket.on('add_reaction', async ({ messageId, emoji, userId: reactionUserId }) => {
             try {
                 if (!messageId || !emoji || !reactionUserId) return;
 

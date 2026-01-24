@@ -10,22 +10,39 @@ import { ToastContainer } from "react-toastify";
 import { ProtectedRoute, PublicRoute } from "./Protected";
 import useUserStore from "./store/useUserStore";
 import { initializeSocket, disconnectSocket } from "./services/chat.service";
+import { useChatStore } from "./store/chatStore";
 
 function App() {
   const { user } = useUserStore();
-  const socketInitialized = useRef(false);
+  const { setCurrentUser, initsocketListeners, cleanup } = useChatStore();
+  // const socketInitialized = useRef(false);
 
   useEffect(() => {
-    if (user?._id && !socketInitialized.current) {
-      initializeSocket();
-      socketInitialized.current = true;
-    }
+    //   if (user?._id && !socketInitialized.current) {
+    //     initializeSocket();
+    //     socketInitialized.current = true;
+    //   }
 
-    if (!user?._id && socketInitialized.current) {
-      disconnectSocket();
-      socketInitialized.current = false;
+    //   if (!user?._id && socketInitialized.current) {
+    //     disconnectSocket();
+    //     socketInitialized.current = false;
+    //   }
+    // }, [user?._id]);
+
+    if (user?._id) {
+      const socket = initializeSocket();
+
+      if (socket) {
+        setCurrentUser(user);
+
+        initsocketListeners();
+      }
     }
-  }, [user?._id]);
+    return () => {
+      cleanup();
+      disconnectSocket();
+    }
+  }, [user, setCurrentUser, initsocketListeners, cleanup])
 
   return (
     <>

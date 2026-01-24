@@ -14,6 +14,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.2",
     "date-fns": "^4.1.0",
+    "emoji-picker-react": "^4.17.1",
     "framer-motion": "^12.24.12",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -23,6 +24,7 @@
     "react-toastify": "^11.0.5",
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.1.18",
+    "uninstall": "^0.0.0",
     "yup": "^1.7.1",
     "zustand": "^5.0.9"
   },
@@ -31,6 +33,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "daisyui": "^5.5.14",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
