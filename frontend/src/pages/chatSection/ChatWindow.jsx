@@ -35,14 +35,32 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
 
     // console.log(lastSeen);
 
+    // useEffect(() => {
+    //     if (selectedContact?._id && conversations?.data?.length > 0) {
+    //         const conversation = conversations?.data?.find((conv) => conv.participants.some((participant) => participant._id === selectedContact?._id))
+    //         if (conversation._id) {
+    //             fetchMessages(conversation._id)
+    //         }
+    //     }
+    // }, [selectedContact, conversations])
     useEffect(() => {
-        if (selectedContact?._id && conversations?.data?.length > 0) {
-            const conversation = conversations?.data?.find((conv) => conv.participants.some((participant) => participant._id === selectedContact?._id))
-            if (conversation._id) {
-                fetchMessages(conversation._id)
-            }
+        if (!selectedContact?._id) return;
+        if (!Array.isArray(conversations?.data)) return;
+
+        const conversation = conversations.data.find((conv) =>
+            Array.isArray(conv.participants) &&
+            conv.participants.some(
+                (participant) =>
+                    participant &&
+                    (participant._id === selectedContact._id ||
+                        participant === selectedContact._id)
+            )
+        );
+
+        if (conversation?._id) {
+            fetchMessages(conversation._id);
         }
-    }, [selectedContact, conversations])
+    }, [selectedContact?._id, conversations?.data]);
 
     useEffect(() => {
         fetchConversations();
@@ -201,7 +219,7 @@ const ChatWindow = ({ contact: selectedContact, setSelectedContact }) => {
                     <React.Fragment key={date}>
                         {renderDateSeparator(new Date(date))}
                         {msgs
-                            .filter((msg) => msg.conversation === selectedContact?.conversation?._id)
+                            // .filter((msg) => msg.conversation === selectedContact?.conversation?._id)
                             .map((msg) => (
                                 <MessageBubble
                                     key={msg._id || msg.tempId}

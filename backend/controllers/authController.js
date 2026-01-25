@@ -11,15 +11,11 @@ const Conversation = require("../models/Conversation");
 const sendOtp = async (req, res) => {
     const { phoneNumber, phoneSuffix, email } = req.body;
     const otp = otpGenerate();
-    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 min
-    let user;
+    const expiry = new Date(Date.now() + 5 * 60 * 1000);
 
     try {
         if (email) {
-            user = await User.findOne({ email });
-            if (!user) {
-                user = new User({ email });
-            }
+            let user = await User.findOne({ email }) || new User({ email });
             user.emailOtp = otp;
             user.emailOtpExpiry = expiry;
             await user.save();
@@ -31,16 +27,22 @@ const sendOtp = async (req, res) => {
             return response(res, 400, "Phone number and suffix are required");
         }
 
-        const fullPhoneNumber = `${phoneSuffix}${phoneNumber}`;
-        user = await User.findOne({ phoneNumber });
+        // const fullPhoneNumber = `${phoneSuffix}${phoneNumber}`;
+        const fullPhoneNumber = phoneSuffix.startsWith("+")
+            ? `${phoneSuffix}${phoneNumber}`
+            : `+${phoneSuffix}${phoneNumber}`;
+
+        let user = await User.findOne({ phoneNumber: fullPhoneNumber });
         if (!user) {
-            user = new User({ phoneNumber, phoneSuffix });
+            user = new User({ phoneNumber: fullPhoneNumber, phoneSuffix });
+            await user.save();
         }
+
         await twilioService.sendOtpToPhoneNumber(fullPhoneNumber);
-        await user.save();
-        return response(res, 200, "OTP sent successfully", { phoneNumber: fullPhoneNumber });
+        return response(res, 200, "OTP sent successfully");
+
     } catch (error) {
-        console.error("Error in sendOtp:", error);
+        console.error("sendOtp error:", error);
         return response(res, 500, "Internal Server Error");
     }
 };
@@ -48,40 +50,47 @@ const sendOtp = async (req, res) => {
 // Verify OTP
 const verifyOtp = async (req, res) => {
     const { phoneNumber, phoneSuffix, otp, email } = req.body;
+
     try {
         let user;
+
         if (email) {
             user = await User.findOne({ email });
-            if (!user) {
-                return response(res, 404, "User not found with this email");
+            if (!user) return response(res, 404, "User not found");
+
+            if (
+                !user.emailOtp ||
+                String(user.emailOtp) !== String(otp) ||
+                new Date() > new Date(user.emailOtpExpiry)
+            ) {
+                return response(res, 400, "Invalid or expired OTP");
             }
-            const now = new Date();
-            if (!user.emailOtp || String(user.emailOtp) !== String(otp) || now > new Date(user.emailOtpExpiry)) {
-                return response(res, 400, "Invalid OTP");
-            }
+
             user.isVerified = true;
             user.emailOtp = null;
             user.emailOtpExpiry = null;
             await user.save();
         } else {
-            if (!phoneNumber || !phoneSuffix) {
-                return response(res, 400, "Phone number and suffix are required");
-            }
-            const fullPhoneNumber = `+${phoneSuffix}${phoneNumber}`;
-            user = await User.findOne({ phoneNumber });
-            if (!user) {
-                return response(res, 404, "User not found with this phone number");
-            }
+            // const fullPhoneNumber = `${phoneSuffix}${phoneNumber}`;
+            const fullPhoneNumber = phoneSuffix.startsWith("+")
+                ? `${phoneSuffix}${phoneNumber}`
+                : `+${phoneSuffix}${phoneNumber}`;
+
+            user = await User.findOne({ phoneNumber: fullPhoneNumber });
+            if (!user) return response(res, 404, "User not found");
+
             const result = await twilioService.verifyOtp(fullPhoneNumber, otp);
-            if (result.status !== "approved") {
-                return response(res, 400, "Invalid OTP");
+
+            if (!result || result.status !== "approved") {
+                return response(res, 400, "Invalid or expired OTP");
             }
+
             user.isVerified = true;
             await user.save();
         }
 
-        // Generate token after successful verification
         const token = generateToken(user._id);
+
         res.cookie("auth_token", token, {
             httpOnly: true,
             secure: true,
@@ -89,7 +98,6 @@ const verifyOtp = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        // Always return username in response
         return response(res, 200, "OTP verified successfully", {
             user: {
                 _id: user._id,
@@ -102,6 +110,7 @@ const verifyOtp = async (req, res) => {
             },
             token
         });
+
     } catch (error) {
         console.error("Error in verifyOtp:", error);
         return response(res, 500, "Internal Server Error");

@@ -72,10 +72,10 @@ const Login = () => {
         resetLoginState
     } = useLoginStore();
 
-    const [phoneNumber, setPhoneNumber] = useState("");
+    // const [phoneNumber, setPhoneNumber] = useState("");
     const [selectedCountry, setSelectedCountry] = useState(countries[0]);
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-    const [email, setEmail] = useState("");
+    // const [email, setEmail] = useState("");
     const [profilePicture, setProfilePicture] = useState(null);
     const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]);
     const [profilePictureFile, setProfilePictureFile] = useState(null);
@@ -156,7 +156,14 @@ const Login = () => {
             setLoading(true);
             if (!userPhoneData) throw new Error("Phone or Email data is missing");
 
+            // const otpString = otp.join("");
             const otpString = otp.join("");
+
+            if (!/^\d{6}$/.test(otpString)) {
+                toast.error("Please enter a valid 6-digit OTP");
+                setLoading(false);
+                return;
+            }
             let response;
 
             if (userPhoneData?.email) {
@@ -184,7 +191,8 @@ const Login = () => {
             }
         } catch (error) {
             console.log(error);
-            setError(error.message || "Failed to verify OTP");
+            // setError(error.message || "Failed to verify OTP");
+            setError(typeof error === "string" ? error : "Something went wrong");
         } finally {
             setLoading(false);
         }
@@ -224,6 +232,7 @@ const Login = () => {
     };
 
     const handleOtpChange = (index, value) => {
+        if (!/^\d?$/.test(value)) return;
         const newOtp = [...otp];
         newOtp[index] = value;
         setOtp(newOtp);
@@ -266,7 +275,7 @@ const Login = () => {
                 {error && <p className='text-red-500 text-center mb-4'>{error}</p>}
                 {step === 1 && (
                     <form onSubmit={handleLoginSubmit(onLoginSubmit)}>
-                        <p className="mb-4 text-center">
+                        <p className={`mb-4 text-center ${theme === 'dark' ? "text-white" : "text-gray-600"}`}>
                             Enter your phone number to receive an OTP
                         </p>
 
@@ -288,7 +297,7 @@ const Login = () => {
                                     </button>
 
                                     {showDropdown && (
-                                        <div className={`absolute z-10 w-full mt-1 border rounded-md shadow-lg max-h-60 overflow-auto ${theme === "dark" ? "bg-gray-700" : "bg-white"}`}>
+                                        <div className={`absolute z-10 w-full mt-1 border rounded-md shadow-lg max-h-60 overflow-auto ${theme === "dark" ? "bg-gray-700 text-white" : "bg-white text-gray-600"}`}>
 
                                             <input
                                                 type="text"
@@ -322,7 +331,7 @@ const Login = () => {
                                     placeholder="Phone Number"
                                     className={`w-2/3 px-4 py-2 border rounded-md focus:outline-none ${theme === "dark"
                                         ? "bg-gray-700 border-gray-600 text-white"
-                                        : "bg-white border-gray-300"
+                                        : "bg-white border-gray-300 text-gray-600"
                                         }`}
                                 />
                             </div>
@@ -389,7 +398,7 @@ const Login = () => {
                                     onChange={(e) => handleOtpChange(index, e.target.value)}
                                     className={`w-12 h-12 text-center border ${theme === "dark"
                                         ? "bg-gray-700 border-gray-600 text-white"
-                                        : "bg-white border-gray-300"
+                                        : "bg-white border-gray-300 text-gray-600"
                                         } rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${otpErrors.otp ? "border-red-500" : ""
                                         }`}
                                 />
@@ -407,7 +416,7 @@ const Login = () => {
                             {loading ? <Spinner /> : "Verify OTP"}
                         </button>
 
-                        <button type='submit' onClick={handleBack} className={`w-full mt-2 ${theme == 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700"} py-2 rounded-md hover:bg-gray-300 transition flex items-center justify-center`}>
+                        <button type='button' onClick={handleBack} className={`w-full mt-2 ${theme === 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700"} py-2 rounded-md hover:bg-gray-300 transition flex items-center justify-center`}>
                             <FaArrowLeft className='mr-2' />
                             Wrong number? Go Back..
                         </button>
