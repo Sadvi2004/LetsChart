@@ -106,6 +106,7 @@ const verifyOtp = async (req, res) => {
                 phoneNumber: user.phoneNumber,
                 phoneSuffix: user.phoneSuffix,
                 profilePicture: user.profilePicture,
+                about: user.about,
                 isVerified: user.isVerified
             },
             token
@@ -145,7 +146,8 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        if (about) user.about = about;
+        // if (about) user.about = about;
+        if (about !== undefined) user.about = about;
 
         await user.save();
         return res.status(200).json({
@@ -176,7 +178,7 @@ const checkAuthenticated = async (req, res) => {
         if (!userId) {
             return response(res, 404, "unauthorization please login");
         }
-        const user = await User.findById(userId).select("username email phoneNumber phoneSuffix profilePicture isVerified");
+        const user = await User.findById(userId).select("username email phoneNumber phoneSuffix profilePicture isVerified about agreed lastSeen isOnline");
         if (!user) {
             return response(res, 404, "user not found");
         }

@@ -7,7 +7,7 @@ html {
   font-family: "Mona Sans", sans-serif;
 }
 
-input:-webkit-autofill,
+/* input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
@@ -15,4 +15,4 @@ input:-webkit-autofill:active {
   box-shadow: 0 0 0 1000px transparent inset !important;
   -webkit-text-fill-color: inherit !important;
   transition: background-color 9999s ease-in-out 0s;
-}
+} */

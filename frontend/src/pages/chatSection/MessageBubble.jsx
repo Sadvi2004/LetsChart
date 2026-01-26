@@ -49,6 +49,12 @@ const MessageBubble = ({ message, theme, onReact, currentUser, deleteMessage }) 
                         <p className="mt-1 pr-6 wrap-break-word">{message.content}</p>
                     </div>
                 )}
+                {message.contentType === 'video' && (
+                    <div className="mb-5">
+                        <video src={message.imageOrVideoUrl} controls alt="media" className="rounded-lg max-w-xs" />
+                        <p className="mt-1 pr-6 wrap-break-word">{message.content}</p>
+                    </div>
+                )}
 
                 {/* TIME + STATUS */}
                 <div className="absolute bottom-1 right-2 flex items-center gap-1 text-xs opacity-60">
