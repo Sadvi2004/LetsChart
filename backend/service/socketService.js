@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const User = require('../models/User');
 const Message = require('../models/Message');
+const { socketMiddleware } = require('../middleware/socketMiddleware');
 
 // Maps to track online presence and typing states
 const onlineUsers = new Map();
@@ -16,6 +17,11 @@ const initializeSocket = (server) => {
         pingTimeout: 60000, // disconnect inactive sockets after 60s
     });
 
+    //middleware
+    io.use(socketMiddleware);
+
+
+    //when a new socket connection is established
     io.on('connection', (socket) => {
         console.log(`User connected: ${socket.id}`);
         let userId = null;

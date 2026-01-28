@@ -5,7 +5,7 @@ const statusSchema = new mongoose.Schema({
     contentType: { type: String, enum: ['image', 'video', 'text'], default: 'text' },
     viewers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     expiresAt: { type: Date, required: true },
-}, { timestamp: true })
+}, { timestamps: true })
 
 const status = mongoose.model('Status', statusSchema);
 module.exports = status;

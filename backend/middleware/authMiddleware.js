@@ -1,11 +1,16 @@
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
-    const authToken = req.cookies?.auth_token;
-    if (!authToken) return res.status(401).json({ error: "Auth token missing" });
+    // const authToken = req.cookies?.auth_token;
+    // if (!authToken) return res.status(401).json({ error: "Auth token missing" });
 
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith(`Bearer`)) {
+        return res.status(401).json({ error: "Auth token missing" });
+    }
+    const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) {

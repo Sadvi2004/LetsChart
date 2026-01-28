@@ -136,7 +136,7 @@ exports.viewStatus = async (req, res) => {
 
 // Delete a status
 exports.deleteStatus = async (req, res) => {
-    const { statusId } = req.body; // or req.params if you prefer
+    const { statusId } = req.params; // or req.params if you prefer
     const userId = req.user.userId;
 
     try {

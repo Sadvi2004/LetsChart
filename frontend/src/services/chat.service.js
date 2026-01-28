@@ -9,6 +9,8 @@ export const getConversations = async () => {
 
 let socket = null;
 
+const token = localStorage.getItem("auth_token")
+
 export const initializeSocket = () => {
     if (socket) return socket;
 
@@ -18,7 +20,8 @@ export const initializeSocket = () => {
     const BACKEND_URL = import.meta.env.VITE_API_URL;
 
     socket = io(BACKEND_URL, {
-        withCredentials: true,
+        auth: { token },
+        // withCredentials: true,
         transports: ["websocket"],
         reconnection: true,
         reconnectionAttempts: 5,
