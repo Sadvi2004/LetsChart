@@ -255,7 +255,7 @@ const Status = () => {
                 {showCreateModel && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white p-6 rounded-lg max-w-md w-full">
-                            <h3 className="text-lg font-semibold mb-4">Create Status</h3>
+                            <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? "text-black" : "text-black"}`}>Create Status</h3>
 
                             {filePreview && (
                                 <img
@@ -268,26 +268,26 @@ const Status = () => {
                                 value={newStatus}
                                 onChange={(e) => setNewStatus(e.target.value)}
                                 placeholder="What's on your mind?"
-                                className="w-full border p-3 rounded mb-4"
+                                className={`w-full border p-3 rounded mb-4 ${theme === 'dark' ? "bg-gray-200 border-gray-400 text-black" : "text-black"}`}
                             />
 
                             <input
                                 type="file"
                                 accept="image/*,video/*"
                                 onChange={handleFileChange}
-                                className="mb-4"
+                                className={`mb-4 ${theme === 'dark' ? "text-gray-500" : "text-gray-400"}`}
                             />
 
                             <div className="flex justify-end space-x-3">
                                 <button
                                     onClick={() => setShowCreateModel(false)}
-                                    className="px-4 py-2 bg-gray-300 rounded"
+                                    className="px-4 py-2 bg-gray-300 rounded cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleCreateStatus}
-                                    className="px-4 py-2 bg-green-500 text-white rounded"
+                                    className="px-4 py-2 bg-green-500 text-white rounded cursor-pointer"
                                 >
                                     Create
                                 </button>

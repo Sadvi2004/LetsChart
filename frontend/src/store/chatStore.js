@@ -26,7 +26,7 @@ export const useChatStore = create((set, get) => ({
 
         //listener for receiving new messages
         socket.on("receive_message", (message) => {
-
+            get().receiveMessage(message);
         })
 
         //confirm message delivery
@@ -56,9 +56,14 @@ export const useChatStore = create((set, get) => ({
         });
 
         //handle remove message from oca state
-        socket.on("message_deleted", ({ deletedMessageId }) => {
+        // socket.on("message_deleted", ({ deletedMessageId }) => {
+        //     set((state) => ({
+        //         messages: state.messages.filter((msg) => msg._id !== deletedMessageId)
+        //     }))
+        // })
+        socket.on("message_deleted", ({ _id }) => {
             set((state) => ({
-                messages: state.messages.filter((msg) => msg._id !== deletedMessageId)
+                messages: state.messages.filter((msg) => msg._id !== _id)
             }))
         })
 
@@ -105,9 +110,9 @@ export const useChatStore = create((set, get) => ({
                     socket.emit("get_user_status", otherUser._id, (status) => {
                         set((state) => {
                             const newOnlineUsers = new Map(state.onlineUsers);
-                            newOnlineUsers.set(state.userId, {
-                                isOnline: state.isOnline,
-                                lastSeen: state.lastSeen,
+                            newOnlineUsers.set(status.userId, {
+                                isOnline: status.isOnline,
+                                lastSeen: status.lastSeen,
                             });
                             return { onlineUsers: newOnlineUsers };
                         })

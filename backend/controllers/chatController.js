@@ -53,6 +53,14 @@ exports.sendMessage = async (req, res) => {
             .populate("sender", "username profilePicture")
             .populate("receiver", "username profilePicture");
 
+        // ✅ EMIT LIVE MESSAGE TO RECEIVER
+        if (req.io && req.socketUserMap) {
+            const receiverSocketId = req.socketUserMap.get(receiverId.toString());
+            if (receiverSocketId) {
+                req.io.to(receiverSocketId).emit("receive_message", populatedMessage);
+            }
+        }
+
         return res.status(201).json({
             message: "Message sent",
             data: populatedMessage,

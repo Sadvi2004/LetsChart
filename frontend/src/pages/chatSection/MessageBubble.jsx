@@ -77,7 +77,7 @@ const MessageBubble = ({ message, theme, onReact, currentUser, deleteMessage }) 
                             setShowReactions(false)
                             setShowEmojiPicker(false)
                         }}
-                        className={`p-1 rounded-full ${theme === 'dark' ? "text-white" : "text-gray-800"}`}
+                        className={`p-1 rounded-full ${theme === 'dark' ? "text-amber-400" : "text-gray-800"}`}
                     >
                         <HiDotsVertical size={18} />
                     </button>
@@ -132,7 +132,7 @@ const MessageBubble = ({ message, theme, onReact, currentUser, deleteMessage }) 
                             />
                             <button
                                 onClick={() => setShowEmojiPicker(false)}
-                                className="absolute top-2 right-2"
+                                className={`absolute top-2 right-2 ${theme === 'dark' ? "text-white" : "text-black"}`}
                             >
                                 <RxCross2 />
                             </button>
