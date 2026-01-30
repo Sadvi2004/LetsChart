@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-// import { FaWhatsapp } from 'react-icons/fa';
+import logo from "../assets/Logo1.png"
 
 export default function Loader({ progress = 0 }) {
     return (
@@ -13,7 +13,7 @@ export default function Loader({ progress = 0 }) {
                 transition={{ duration: 0.5, type: 'spring', stiffness: 260, damping: 20 }}
                 className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-8 shadow-lg"
             >
-                <FaWhatsapp className="w-16 h-16 text-green-500" />
+                <img className="w-16 h-16 text-green-500" src={logo} />
             </motion.div>
 
             {/* Progress bar */}

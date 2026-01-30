@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/user-login/Login";
 import HomePage from "./components/HomePage";
@@ -15,20 +15,8 @@ import { useChatStore } from "./store/chatStore";
 function App() {
   const { user } = useUserStore();
   const { setCurrentUser, initsocketListeners, cleanup } = useChatStore();
-  // const socketInitialized = useRef(false);
 
   useEffect(() => {
-    //   if (user?._id && !socketInitialized.current) {
-    //     initializeSocket();
-    //     socketInitialized.current = true;
-    //   }
-
-    //   if (!user?._id && socketInitialized.current) {
-    //     disconnectSocket();
-    //     socketInitialized.current = false;
-    //   }
-    // }, [user?._id]);
-
     if (user?._id) {
       const socket = initializeSocket();
 
