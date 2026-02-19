@@ -465,8 +465,8 @@ const Login = () => {
                                 type="text"
                                 placeholder="Username"
                                 className={`w-full pl-10 pr-3 py-2 border ${theme === "dark"
-                                    ? "bg-gray-700 border-gray-500/40 text-white"
-                                    : "bg-white border-gray-300/60 text-gray-900"
+                                    ? "bg-gray-700 border-gray-500/40 text-white placeholder-gray-400"
+                                    : "bg-white border-gray-300/60 text-gray-900 placeholder-gray-500"
                                     }rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-lg`}
                             />
                             {profileErrors.username && (
