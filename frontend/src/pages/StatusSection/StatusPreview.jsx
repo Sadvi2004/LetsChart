@@ -18,6 +18,9 @@ const StatusPreview = ({
     const [showViewers, setShowViewers] = useState(false);
 
     const currentStatus = contact?.statuses?.[currentIndex];
+    // useEffect(() => {
+    //     console.log("CURRENT STATUS FRONTEND:", currentStatus);
+    // }, [currentStatus]);
     const isOwnerStatus = contact?.id === currentUser?._id;
 
     useEffect(() => {
@@ -123,28 +126,49 @@ const StatusPreview = ({
                     </div>
 
                     {/* Content */}
-                    <div className='w-full h-full flex items-center justify-center'>
-                        {currentStatus.contentType === 'text' ? (
-                            <div className='text-white text-center p-8'>
-                                <p className='text-2xl font-medium'>
+                    <div className="relative w-full h-full flex items-center justify-center">
+                        {currentStatus.contentType === "image" && (
+                            <>
+                                <img
+                                    src={currentStatus.media}
+                                    alt="media"
+                                    className="max-w-full max-h-full object-contain"
+                                />
+
+                                {/* Caption Text */}
+                                {currentStatus.text && (
+                                    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg max-w-[90%] text-center">
+                                        {currentStatus.text}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {currentStatus.contentType === "text" && (
+                            <div className="text-white text-center p-8">
+                                <p className="text-2xl font-medium">
                                     {currentStatus.media}
                                 </p>
                             </div>
-                        ) : currentStatus.contentType === 'image' ? (
-                            <img
-                                src={currentStatus.media}
-                                alt="media"
-                                className="max-w-full max-h-full object-contain"
-                            />
-                        ) : currentStatus.contentType === "video" ? (
-                            <video
-                                src={currentStatus.media}
-                                controls
-                                muted
-                                autoPlay
-                                className="max-w-full max-h-full object-contain"
-                            />
-                        ) : null}
+                        )}
+
+                        {currentStatus.contentType === "video" && (
+                            <>
+                                <video
+                                    src={currentStatus.media}
+                                    controls
+                                    muted
+                                    autoPlay
+                                    className="max-w-full max-h-full object-contain"
+                                />
+
+                                {currentStatus.text && (
+                                    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg max-w-[90%] text-center">
+                                        {currentStatus.text}
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     {/* Close */}

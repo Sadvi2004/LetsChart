@@ -144,7 +144,8 @@ const useStatusStore = create((set, get) => ({
             }
             acc[statusUserId].statuses.push({
                 id: status._id,
-                media: status.content,
+                media: status.media,
+                text: status.text,
                 contentType: status.contentType,
                 timestamp: status.createdAt,
                 viewers: status.viewers,

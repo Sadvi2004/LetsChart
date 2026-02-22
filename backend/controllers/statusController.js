@@ -35,10 +35,10 @@ exports.CreateStatus = async (req, res) => {
 
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
-
         const status = new Status({
             user: userId,
-            content: mediaUrl || content,
+            media: mediaUrl || null,
+            text: content || null,
             contentType: finalContentType,
             expiresAt,
         });

@@ -18,7 +18,7 @@ const Status = () => {
     const [showCreateModel, setShowCreateModel] = useState(false)
     const [newStatus, setNewStatus] = useState("")
     const [filePreview, setFilePreview] = useState(null)
-
+    const [creating, setCreating] = useState(false);
     const { theme } = useThemeStore()
     const { user } = useUserStore()
 
@@ -62,11 +62,17 @@ const Status = () => {
 
     const handleCreateStatus = async () => {
         if (!newStatus.trim() && !selectedFile) return
-        await createStatus({ content: newStatus, file: selectedFile })
-        setNewStatus("")
-        setSelectedFile(null)
-        setFilePreview(null)
-        setShowCreateModel(false)
+        try {
+            setCreating(true)
+            await createStatus({ content: newStatus, file: selectedFile })
+            setNewStatus("")
+            setSelectedFile(null)
+            setFilePreview(null)
+            setShowCreateModel(false)
+        } catch (error) {
+            console.error("Error creating status:", error);
+            setCreating(false);
+        }
     }
 
     const handlePreviewClose = () => {
@@ -287,9 +293,16 @@ const Status = () => {
                                 </button>
                                 <button
                                     onClick={handleCreateStatus}
-                                    className="px-4 py-2 bg-green-500 text-white rounded cursor-pointer"
-                                >
-                                    Create
+                                    disabled={creating}
+                                    className={`px-4 py-2 rounded text-white transition-all duration-300 flex items-center justify-center gap-2 ${creating ? "bg-green-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}`}>
+                                    {creating ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Creating...
+                                        </>
+                                    ) : (
+                                        "Create"
+                                    )}
                                 </button>
                             </div>
                         </div>

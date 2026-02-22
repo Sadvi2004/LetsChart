@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const statusSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    content: { type: String, required: true },
+    media: { type: String },
+    text: { type: String },
     contentType: { type: String, enum: ['image', 'video', 'text'], default: 'text' },
     viewers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     expiresAt: { type: Date, required: true },
