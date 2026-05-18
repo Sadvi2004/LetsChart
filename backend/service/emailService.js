@@ -5,53 +5,45 @@ dotenv.config();
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
 
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
+        pass: process.env.EMAIL_PASS,
+    },
+
+    tls: {
+        rejectUnauthorized: false,
+    },
 });
 
 transporter.verify((error, success) => {
     if (error) {
-        console.error('Error with email services:', error.message);
+        console.error("Error with email services:", error.message);
     } else {
-        console.log('Email service is ready to send messages');
+        console.log("Email service is ready to send messages");
     }
 });
 
 const sendOtpToEmail = async (email, otp) => {
 
     const html = `
-    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-      <h2 style="color: #075e54;">🔐 Let'sChat Verification</h2>
-      
-      <p>Hi there,</p>
-      
-      <p>Your one-time password (OTP) to verify your Let'sChat account is:</p>
-      
-      <h1 style="background: #e0f7fa; color: #000; padding: 10px 20px; display: inline-block; border-radius: 5px; letter-spacing: 2px;">
-        ${otp}
-      </h1>
+    <div style="font-family: Arial, sans-serif; color: #333;">
+      <h2>🔐 Let'sChat Verification</h2>
 
-      <p><strong>This OTP is valid for the next 5 minutes.</strong> Please do not share this code with anyone.</p>
+      <p>Your OTP is:</p>
 
-      <p>If you didn’t request this OTP, please ignore this email.</p>
+      <h1>${otp}</h1>
 
-      <p style="margin-top: 20px;">Thanks & Regards,<br/>Let'sChat Security Team</p>
-
-      <hr style="margin: 30px 0;" />
-
-      <small style="color: #777;">This is an automated message. Please do not reply.</small>
+      <p>This OTP is valid for 5 minutes.</p>
     </div>
     `;
 
     await transporter.sendMail({
         from: `Let'sChat <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: "Your Let'sChat OTP Verification Code",
+        subject: "Let'sChat OTP Verification",
         html,
     });
 };
