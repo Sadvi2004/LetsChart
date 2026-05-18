@@ -1,9 +1,13 @@
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
+
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -12,13 +16,14 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify((error, success) => {
     if (error) {
-        console.error('Error with email services:', error);
+        console.error('Error with email services:', error.message);
     } else {
         console.log('Email service is ready to send messages');
     }
 });
 
 const sendOtpToEmail = async (email, otp) => {
+
     const html = `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
       <h2 style="color: #075e54;">🔐 Let'sChat Verification</h2>
@@ -41,7 +46,7 @@ const sendOtpToEmail = async (email, otp) => {
 
       <small style="color: #777;">This is an automated message. Please do not reply.</small>
     </div>
-  `;
+    `;
 
     await transporter.sendMail({
         from: `Let'sChat <${process.env.EMAIL_USER}>`,
@@ -49,6 +54,6 @@ const sendOtpToEmail = async (email, otp) => {
         subject: "Your Let'sChat OTP Verification Code",
         html,
     });
-}
+};
 
 module.exports = { sendOtpToEmail };
