@@ -9,20 +9,28 @@ export const getConversations = async () => {
 
 let socket = null;
 
-const token = localStorage.getItem("auth_token")
-
 export const initializeSocket = () => {
     if (socket) return socket;
 
     const user = useUserStore.getState().user;
+
     if (!user?._id) return null;
 
-    const BACKEND_URL = import.meta.env.VITE_API_URL;
+
+    const token = localStorage.getItem("auth_token");
+
+    const BACKEND_URL = "https://letschart-2.onrender.com";
 
     socket = io(BACKEND_URL, {
-        auth: { token },
-        // withCredentials: true,
-        transports: ["websocket"],
+        auth: {
+            token,
+        },
+
+        withCredentials: true,
+
+
+        transports: ["websocket", "polling"],
+
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
@@ -30,6 +38,7 @@ export const initializeSocket = () => {
 
     socket.on("connect", () => {
         console.log("Socket connected:", socket.id);
+
         socket.emit("user_connected", user._id);
     });
 
@@ -50,6 +59,7 @@ export const disconnectSocket = () => {
     if (socket) {
         socket.disconnect();
         socket = null;
+
         console.log("Socket fully disconnected");
     }
 };
