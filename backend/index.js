@@ -1,7 +1,8 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const bodyParser = require("body-parser");
 const http = require("http");
 
@@ -11,7 +12,6 @@ const initializeSocket = require("./service/socketService");
 const authRoutes = require("./routes/authRoutes");
 const chatRoutes = require("./routes/chatRoute");
 const statusRoutes = require("./routes/statusRoute");
-dotenv.config();
 const { askGemini } = require("./service/gemini.service");
 const aiRoutes = require("./routes/aiRoutes");
 
