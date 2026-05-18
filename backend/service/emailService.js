@@ -1,30 +1,6 @@
-const nodemailer = require('nodemailer');
-const dotenv = require('dotenv');
+const { Resend } = require("resend");
 
-dotenv.config();
-
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-
-    tls: {
-        rejectUnauthorized: false,
-    },
-});
-
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("Error with email services:", error.message);
-    } else {
-        console.log("Email service is ready to send messages");
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOtpToEmail = async (email, otp) => {
 
@@ -40,12 +16,14 @@ const sendOtpToEmail = async (email, otp) => {
     </div>
     `;
 
-    await transporter.sendMail({
-        from: `Let'sChat <${process.env.EMAIL_USER}>`,
+    const response = await resend.emails.send({
+        from: "onboarding@resend.dev",
         to: email,
         subject: "Let'sChat OTP Verification",
         html,
     });
+
+    console.log("Email sent:", response);
 };
 
 module.exports = { sendOtpToEmail };
