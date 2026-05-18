@@ -27,7 +27,8 @@ connectDB();
 // ===============================
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL,
+        // origin: process.env.FRONTEND_URL,
+        origin: "https://lets-chart.vercel.app",
         credentials: true,
     })
 );
