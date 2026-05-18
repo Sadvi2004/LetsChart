@@ -1,42 +1,52 @@
-// import axios from "axios";
-
-// // const apiUrl = `${import.meta.env.VITE_API_URL}/api`;
-// const apiUrl = `https://letschart-2.onrender.com/api`;
-
-// const getToken = () => localStorage.getItem("auth_token")
-
-// const axiosInstance = axios.create({
-//     baseURL: apiUrl,
-//     withCredentials: true,
-// });
-
-// axiosInstance.interceptors.request.use((config) => {
-//     const token = getToken();
-//     if (token) {
-//         config.headers.Authorization = `Bearer ${token}`
-//     }
-//     return config;
-// })
-
-// export default axiosInstance;
-
 import axios from "axios";
 
-const apiUrl = `https://letschart-2.onrender.com/api`;
+const apiUrl = "https://letschart-2.onrender.com/api";
 
 const axiosInstance = axios.create({
     baseURL: apiUrl,
     withCredentials: true,
+    headers: {
+        "Content-Type": "application/json",
+    },
 });
 
-axiosInstance.interceptors.request.use((config) => {
-    const token = localStorage.getItem("auth_token");
+// Add token automatically
+axiosInstance.interceptors.request.use(
+    (config) => {
 
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        const token = localStorage.getItem("auth_token");
+
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
+);
 
-    return config;
-});
+// Handle response errors
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+
+        if (error.response) {
+
+            // Unauthorized
+            if (error.response.status === 401) {
+                console.error("Unauthorized Access");
+            }
+
+            // Internal server error
+            if (error.response.status === 500) {
+                console.error("Server Error");
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export default axiosInstance;
